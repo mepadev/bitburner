@@ -50,7 +50,32 @@ export async function main(ns) {
   const sorted_server = sortServersByMoneyMax(all_servers);
 
   // Select the most valuable server and remove from the list
-  const target = sorted_server[0];
+  const target = {
+    "hostname": "harakiri-sushi",
+    "ip": "85.9.1.5",
+    "sshPortOpen": true,
+    "ftpPortOpen": true,
+    "smtpPortOpen": true,
+    "httpPortOpen": false,
+    "sqlPortOpen": false,
+    "hasAdminRights": true,
+    "cpuCores": 1,
+    "isConnectedTo": false,
+    "ramUsed": 14.4,
+    "maxRam": 16,
+    "organizationName": "HaraKiri Sushi Bar Network",
+    "purchasedByPlayer": false,
+    "backdoorInstalled": false,
+    "baseDifficulty": 15,
+    "hackDifficulty": 15,
+    "minDifficulty": 5,
+    "moneyAvailable": 4000000,
+    "moneyMax": 100000000,
+    "numOpenPortsRequired": 0,
+    "openPortCount": 3,
+    "requiredHackingSkill": 40,
+    "serverGrowth": 40
+  }
 
   sorted_server.forEach((server) => {
     ns.scriptKill("farm.js", server.hostname);
@@ -105,33 +130,68 @@ export async function main(ns) {
   const max_ram = ns.getPurchasedServerMaxRam();
   const purchased_servers = ns.getPurchasedServers();
 
+  // Run farm.js on Servers
   purchased_servers.forEach((server) => {
-    ns.killall(server);
+    const server_info = ns.getServer(server);
+
+    try {
+      ns.scp("farm.js", server, "home");
+
+      let threads = Math.trunc((server_info.maxRam - server_info.ramUsed) / 2.40);
+      ns.exec("farm.js", server, threads, target.hostname);
+      ++i;
+    } catch (err) {
+      ns.print(err);
+    }
   })
 
-  let i = 0;
-  while (i < max_server && purchased_servers < max_server) {
-    // Check if we have enough money to purchase a server
-    if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(max_ram)) {
-      // If we have enough money, then:
-      //  1. Purchase the server
-      //  2. Copy our hacking script onto the newly-purchased server
-      //  3. Run our hacking script on the newly-purchased server with 3 threads
-      //  4. Increment our iterator to indicate that we've bought a new server
+  // Buy Servers
+  while (purchased_servers < max_server) {
+    if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(8)) {
       try {
         let hostname = ns.purchaseServer("pserv-" + i, max_ram);
         ns.scp("farm.js", hostname, "home");
 
-        let threads = Math.trunc(max_ram / 2.40);
+        let threads = Math.trunc(8 / 2.40);
         ns.exec("farm.js", hostname, threads, target.hostname);
         ++i;
       } catch (err) {
         ns.print(err);
       }
     }
-    //Make the script wait for a second before looping again.
-    //Removing this line will cause an infinite loop and crash the game.
     await ns.sleep(5000);
   }
 
+  // Upgrade Servers to infinity
+  while (true) {
+    purchased_servers.forEach((server) => {
+      let server_info = ns.getServer(server);
+
+      let bought = false;
+      let loop = false;
+      do {
+        if (ns.upgradePurchasedServer(server_info.hostname, (server_info.maxRam * 2))) {
+          bought = true;
+          loop = true;
+          server_info = ns.getServer(server);
+        } else {
+          loop = false;
+        }
+      } while (loop);
+
+      if (bought) {
+        ns.killall(server_info.hostname, true);
+
+        ns.scp("farm.js", server_info.hostname, "home");
+
+        let threads = Math.trunc((server_info.maxRam - server_info.ramUsed) / 2.40);
+
+        if (threads > 0) {
+          ns.exec("farm.js", server_info.hostname, threads, target.hostname);
+        }
+      }
+    });
+
+    await ns.sleep(1000 * 60 * 10);
+  }
 }
