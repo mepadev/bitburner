@@ -1,4 +1,4 @@
-async function traverseAndCollect(ns, root, player_info, maxDepth = 100) {
+async function traverseAndCollect(ns, root, player_info, maxDepth = 10) {
   const queue = [{ node: root, depth: 0 }];
   const serverData = [];
   const visited = new Set();
@@ -52,32 +52,33 @@ export async function main(ns) {
   const sorted_server = sortServersByMoneyMax(all_servers);
 
   // Select the most valuable server and remove from the list
-  const target =      {
-    "hostname": "netlink",
-    "ip": "0.4.4.9",
-    "sshPortOpen": false,
-    "ftpPortOpen": false,
-    "smtpPortOpen": false,
-    "httpPortOpen": false,
+  const target =   {
+    "hostname": "max-hardware",
+    "ip": "19.9.4.8",
+    "sshPortOpen": true,
+    "ftpPortOpen": true,
+    "smtpPortOpen": true,
+    "httpPortOpen": true,
     "sqlPortOpen": false,
-    "hasAdminRights": false,
+    "hasAdminRights": true,
     "cpuCores": 1,
     "isConnectedTo": false,
     "ramUsed": 0,
     "maxRam": 32,
-    "organizationName": "NetLink Technologies",
+    "organizationName": "Max Hardware Store",
     "purchasedByPlayer": false,
     "backdoorInstalled": false,
-    "baseDifficulty": 75,
-    "hackDifficulty": 75,
-    "minDifficulty": 25,
-    "moneyAvailable": 275000000,
-    "moneyMax": 6875000000,
-    "numOpenPortsRequired": 3,
-    "openPortCount": 0,
-    "requiredHackingSkill": 423,
-    "serverGrowth": 47
+    "baseDifficulty": 15,
+    "hackDifficulty": 15,
+    "minDifficulty": 5,
+    "moneyAvailable": 10000000,
+    "moneyMax": 250000000,
+    "numOpenPortsRequired": 1,
+    "openPortCount": 4,
+    "requiredHackingSkill": 80,
+    "serverGrowth": 30
   }
+
   sorted_server.forEach((server) => {
     ns.scriptKill("farm.js", server.hostname);
 
